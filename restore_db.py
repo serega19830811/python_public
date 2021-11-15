@@ -4,6 +4,7 @@
 # V.2 2021-11-08
 # V.2.1 2021-11-09  shutdown db
 # V.2.2 2021-11-11  + options rar delete, + change date format in log, + USER and PASSWORD for connect db without script 
+# V.2.3 2021-11-15 change log format
 
 #опции
 #-p путь куда ресторим бд
@@ -76,12 +77,12 @@ def unrar_file(rar_file, path_to):
 def shutdown_db(fdb_filename):
     try:
         if os.path.exists(fdb_filename):
-            res =  subprocess.check_output(["/opt/firebird/bin/gfix", fdb_filename, "-shut", "-force", "0"], encoding='utf-8' )
+            res =  subprocess.check_output(["/opt/firebird/bin/gfix", "localhost:" + fdb_filename, "-shut", "-force", "0", "-user", DB_USERNAME, "-pa", DB_PASSWORD ], encoding='utf-8' )
             return res
     except:
         save_log(f"Ошибка shutdown-а БД {fdb_filename}")
         end_log()
-        exit(2)
+        #exit(2)
 
 
 def rename_file_to_old(src_file, day_of_week=""):
@@ -208,13 +209,13 @@ FP_RAR_FILE = WORK_PATH + RAR_FILE
 
 #инициализируем лог
 config_log(LOG_PATH + get_filename(FP_RAR_FILE) + "_rst.log")
-save_log("Start restore " + RAR_FILE, False)
+save_log("Run script " + RAR_FILE, False)
 
 if NORAR == False:
 
-    save_log(" start unrar " + RAR_FILE , False)
+    save_log("start unrar " + RAR_FILE , False)
     result_unrar = unrar_file(FP_RAR_FILE, WORK_PATH)
-    save_log(" end unrar " + RAR_FILE , False)
+    save_log("end unrar " + RAR_FILE , False)
     fbk_filename = get_fbk_filename(result_unrar)
 
 
@@ -222,9 +223,9 @@ fb_detail_log = LOG_PATH + get_filename(fbk_filename) + '_detail.log'
 check_path(LOG_PATH)
 fdb_filename = WORK_PATH + get_filename(fbk_filename) + '_rst.fdb'
 shutdown_db(fdb_filename)
-save_log(" start restore " + fbk_filename, False)
+save_log("BEGIN RESTORE " + fbk_filename, False)
 result_restore = restor_db(fbk_filename, fdb_filename, fb_detail_log)
-save_log(" finish restore " + fbk_filename , False)
+save_log("SUC END RESTORE " + fbk_filename , False)
 save_log("############################", False)
 
 #удаляем rar
