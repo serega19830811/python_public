@@ -5,6 +5,7 @@
 # V.2.1 2021-11-09  shutdown db
 # V.2.2 2021-11-11  + options rar delete, + change date format in log, + USER and PASSWORD for connect db without script 
 # V.2.3 2021-11-15 change log format
+# V.2.3.1 2021-11-17 Fix delete RAR file
 
 #опции
 #-p путь куда ресторим бд
@@ -229,7 +230,7 @@ save_log("SUC END RESTORE " + fbk_filename , False)
 save_log("############################", False)
 
 #удаляем rar
-if DELETE_RAR == True:
+if DELETE_RAR == True and NORAR == False::
     save_log("Delete rar: " + FP_RAR_FILE, False)
     delete_files([FP_RAR_FILE])
 
