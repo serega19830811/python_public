@@ -7,8 +7,8 @@ import json
 import argparse
 
 
-Start_pattern = r"(\d+-\d+-\d+) (\d+:\d+) (?:begin|BEGIN) .*"
-End_pattern = r"(\d+-\d+-\d+) (\d+:\d+) (?:SUCCESS END|SUC END) .*"
+Start_pattern = r"(\d+-\d+-\d+) (\d+:\d+|\d+:\d+:\d+)\s*.* (?:begin|BEGIN) .*"
+End_pattern = r"(\d+-\d+-\d+) (\d+:\d+|\d+:\d+:\d+)\s*.* (?:SUCCESS END|SUC END) .*"
 
 #filename_bck = "/opt/firebird/script/log/nnf_asutp_bck.log"
 #filename_rst = "/opt/firebird/script/log/nnf_asutp_rest_rst_log.txt"
@@ -39,30 +39,48 @@ def get_date(string_list, pattern):
     result = re.findall(pattern, string_list)
     return result
 
-
-def parse_log_file(filename):
-    with open (filename) as file:
-        line = file.readlines()[-4:]
-
-        if line[-1].find('END') != -1:
-            end_string = line[-1]
-            if line[-2].find('begin') or line[-2].find('BEGIN') != -1:
-                start_string = line[-2]
-            else:
-                print(f'В логах не найдены шаблоны начала лога.\nФайл лога {filename} ')
-                exit(2)
-
+def search_line(lines, cur_pos):
+    if lines[cur_pos].find('END') != -1:
+        end_string = lines[cur_pos]
+#        print(cur_pos)
+        if lines[cur_pos - 1 ].find('begin') or lines[cur_pos - 1].find('BEGIN') != -1:
+            start_string = lines[cur_pos -1 ]
         else:
-            end_string = line[-2]
-            if line[-3].find('begin') or line[-2].find('BEGIN') != -1:
-                start_string = line[-3]
-            else:
-                print(f'В логах не найдены шаблоны начала лога.\nФайл лога {filename} ')
-                exit(2)
+            print(f'В логах не найдены шаблоны начала лога.\nФайл лога {filename} ')
+            return 0,0
+        return (start_string, end_string)
+    else:
+        return 0,0
+#    else:
+#        if cur_pos != -count_lines:
+#                    print(cur_pos)
+#
+#            cur_pos += -1
+#            search_line(lines, cur_pos, count_lines)
+#            print("Выход по else")
+#            #return 0,0
 
+
+
+#    return (start_string, end_string)
+
+
+def parse_log_file(filename, count_lines):
+    #cur_pos = -1
+    with open (filename) as file:
+        lines = file.readlines()[-count_lines:]
+
+        for n in range(-1, -count_lines, -1):
+            print(f"cur_pos={n}")
+            start_string, end_string = search_line(lines, n)
+            print(f"start_st={start_string} end_string={end_string}")
+            if start_string != 0 and end_string !=0:
+                break
+            
         start_date = get_date(start_string, Start_pattern)
         end_date = get_date(end_string, End_pattern)
 
+        print(f"start_date={start_date}  end_date={end_date}")
         #print(f"start={start_date} end={end_date}")
         return start_date, end_date
 
@@ -88,7 +106,7 @@ db_filename = db_name
 filename_bck = f"/opt/firebird/script/log/{db_filename}_bck.log"
 filename_rst = f"/opt/firebird/script/log/{db_filename}_rest_rst_log.txt"
 json_filename = f"/tmp/{db_name}.json"
-
+count_lines = 5 # парсим 5 строк к файле лога
 
 #check filename_bck
 if not(os.path.exists(filename_bck)):
@@ -111,10 +129,10 @@ if fullpath_db:
     json_struct['size_db'] = os.path.getsize(fullpath_db)
 
 #Get bck time
-json_struct['start_bck'], json_struct['end_bck'] = parse_log_file(filename_bck)
+json_struct['start_bck'], json_struct['end_bck'] = parse_log_file(filename_bck, count_lines)
 
 #Get rst time
-json_struct['start_rst'], json_struct['end_rst'] = parse_log_file(filename_rst)
+json_struct['start_rst'], json_struct['end_rst'] = parse_log_file(filename_rst, count_lines)
 
 #Save json
 try:
