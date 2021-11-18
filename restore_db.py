@@ -230,7 +230,7 @@ save_log("SUC END RESTORE " + fbk_filename , False)
 save_log("############################", False)
 
 #удаляем rar
-if DELETE_RAR == True and NORAR == False::
+if DELETE_RAR == True and NORAR == False:
     save_log("Delete rar: " + FP_RAR_FILE, False)
     delete_files([FP_RAR_FILE])
 
